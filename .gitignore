@@ -1,0 +1,18 @@
+# credentials and secrets
+.credentials.json
+*credentials*.json
+.env
+.env.*
+*.pem
+*.key
+
+# raw API responses and logs (may contain account data)
+usage.json
+*.log
+
+# screenshots of the desktop
+*.png
+
+# tooling
+.superpowers/
+.claude/
