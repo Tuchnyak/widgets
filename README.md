@@ -191,4 +191,4 @@ plasmawindowed local.claude-usage
 
 ## Лицензия
 
-В `metadata.json` указана лицензия MIT. Отдельного файла `LICENSE` в репозитории пока нет.
+MIT, см. файл [LICENSE](LICENSE).
