@@ -1,101 +1,104 @@
-# Claude Usage — виджет KDE Plasma 6
+# Claude Usage — KDE Plasma 6 widget
 
-[English version](README.en.md)
+[Русская версия](README.ru.md)
 
-Два кольца в панели Plasma, которые показывают, сколько лимитов подписки Claude Pro вы уже израсходовали:
+Two rings in a Plasma panel that show how much of your Claude Pro subscription limits you have already used:
 
-- **левое кольцо** — 5-часовое окно;
-- **правое кольцо** — недельный лимит.
+- **left ring**: the 5-hour window;
+- **right ring**: the weekly limit.
 
-Внутри кольца число процентов. Виджет рассчитан на взгляд «боковым зрением»: без клика, без раскрытия, без настроек.
+The percentage is shown inside each ring. The widget is meant to be read at a glance: no clicking, no expanding, no settings.
 
 ```
    ╭───╮ ╭───╮
-   │ 25│ │ 10│      5 часов: 25%, сброс через 1 ч 40 мин
-   ╰───╯ ╰───╯      Неделя: 10%, сброс через 4 дн 21 ч     ← всплывашка при наведении
+   │ 25│ │ 10│      5 hours: 25%, resets in 1 h 40 min
+   ╰───╯ ╰───╯      Week: 10%, resets in 4 d 21 h        ← tooltip on hover
 ```
 
-## Содержание
+(The tooltip text in the actual widget is in Russian; see [Limitations](#limitations).)
 
-- [Требования](#требования)
-- [Установка](#установка)
-- [Как пользоваться](#как-пользоваться)
-- [Как это работает](#как-это-работает)
-- [Приватность и безопасность](#приватность-и-безопасность)
-- [Ограничения](#ограничения)
-- [Что проверено, а что нет](#что-проверено-а-что-нет)
-- [Разработка](#разработка)
-- [Чего в виджете нет намеренно](#чего-в-виджете-нет-намеренно)
+## Contents
 
-## Требования
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Usage](#usage)
+- [How it works](#how-it-works)
+- [Privacy and security](#privacy-and-security)
+- [Limitations](#limitations)
+- [What has and has not been verified](#what-has-and-has-not-been-verified)
+- [Development](#development)
+- [What the widget intentionally does not do](#what-the-widget-intentionally-does-not-do)
+- [License](#license)
 
-- KDE Plasma 6 (разработан и проверен на Plasma 6.8.2, KDE neon).
-- Утилиты `curl` и `jq`.
-- [Claude Code](https://claude.com/claude-code), в котором выполнен вход по подписке. Виджет берёт OAuth-токен из `~/.claude/.credentials.json`. Если файла нет, виджет покажет серые кольца с прочерком.
+## Requirements
 
-## Установка
+- KDE Plasma 6 (developed and tested on Plasma 6.8.2, KDE neon).
+- `curl` and `jq`.
+- [Claude Code](https://claude.com/claude-code) signed in with a subscription. The widget takes the OAuth token from `~/.claude/.credentials.json`. If the file is missing, the widget shows gray rings with a dash.
 
-Из корня репозитория:
+## Installation
+
+From the repository root:
 
 ```bash
 kpackagetool6 --type Plasma/Applet --install claude-usage
 ```
 
-Затем: правый клик по панели → **Добавить виджеты** → **Claude Usage**. Если виджета нет в списке, перезапустите оболочку:
+Then: right-click the panel → **Add Widgets** → **Claude Usage**. If the widget is not in the list, restart the shell:
 
 ```bash
 plasmashell --replace &
 ```
 
-Обновление после изменений в коде:
+Updating after code changes:
 
 ```bash
 kpackagetool6 --type Plasma/Applet --upgrade claude-usage
-plasmashell --replace &      # без перезапуска уже добавленные виджеты старый код не подхватят
+plasmashell --replace &      # widgets already on a panel will not pick up new code without a restart
 ```
 
-Удаление:
+Removal:
 
 ```bash
 kpackagetool6 --type Plasma/Applet --remove local.claude-usage
 ```
 
-Идентификатор виджета — `local.claude-usage`, а каталог в репозитории называется `claude-usage`. Для `--install` и `--upgrade` указывается каталог, для `--remove` — идентификатор.
+The widget ID is `local.claude-usage`, while the directory in the repository is called `claude-usage`. `--install` and `--upgrade` take the directory, `--remove` takes the ID.
 
-## Как пользоваться
+## Usage
 
-Ничего настраивать не нужно. Виджет универсальный: работает в горизонтальной и вертикальной панели, а также на рабочем столе.
+There is nothing to configure. The widget is universal: it works in horizontal and vertical panels as well as on the desktop.
 
-### Цвет колец
+### Ring color
 
-Цвет берётся из системной темы, поэтому подстраивается под светлую и тёмную тему.
+The color comes from the system theme, so it follows light and dark themes.
 
-| Заполнение | Цвет кольца |
+| Usage | Ring color |
 |---|---|
-| меньше 80% | акцентный цвет темы |
-| от 80% | оранжевый (предупреждение) |
-| от 95% | красный |
-| данных нет или они устарели | серый |
+| below 80% | theme accent color |
+| 80% and above | orange (warning) |
+| 95% and above | red |
+| no data, or data is stale | gray |
 
-Пороги 80% и 95% зашиты в коде и не настраиваются.
+The 80% and 95% thresholds are hardcoded and not configurable.
 
-### Всплывашка
+### Tooltip
 
-При наведении курсора показываются процент и время до сброса каждого лимита. Время считается в момент наведения, а не при каждом опросе.
+Hovering shows the percentage and the time until reset for each limit. The time left is calculated when you hover, not on every poll.
 
-Если последний запрос не удался, во всплывашке добавляется строка «Данные устарели, последнее обновление: ЧЧ:ММ». Если данных не было вообще, там сообщение «Не удалось получить данные. Войдите в Claude Code.»
+If the last request failed, a line "Данные устарели, последнее обновление: HH:MM" ("Data is stale, last update: HH:MM") is added. If there has never been any data, the tooltip says "Не удалось получить данные. Войдите в Claude Code." ("Could not get data. Sign in to Claude Code.").
 
-### Раскладка
+### Layout
 
-- Горизонтальная панель: кольца в ряд, диаметр равен доступной толщине панели.
-- Вертикальная панель: кольца друг под другом.
-- Рабочий стол: раскладка зависит от пропорций виджета, кольца вписываются в доступную область.
+- Horizontal panel: rings in a row, ring diameter equals the available panel thickness.
+- Vertical panel: rings stacked one above the other.
+- Desktop: layout depends on the widget's proportions; rings fit the available area.
 
-Диаметр колец ограничен толщиной панели за вычетом её внутренних отступов. На панели 30 px кольца получаются около 22 px, на панели 46 px — около 30 px. Если кольца кажутся мелкими, делайте панель толще.
+Ring diameter is limited by the panel thickness minus the panel's own inner padding. On a 30 px panel the rings come out at about 22 px, on a 46 px panel at about 30 px. If the rings look too small, make the panel thicker.
 
-## Как это работает
+## How it works
 
-Каждые 10 минут (и сразу при запуске) виджет выполняет команду:
+Every 10 minutes (and immediately on startup) the widget runs:
 
 ```bash
 jq -r '"Authorization: Bearer " + .claudeAiOauth.accessToken' "$HOME/.claude/.credentials.json" | \
@@ -103,94 +106,94 @@ jq -r '"Authorization: Bearer " + .claudeAiOauth.accessToken' "$HOME/.claude/.cr
        -w '\n%{http_code}' https://api.anthropic.com/api/oauth/usage
 ```
 
-Команда запускается через движок `executable` из `Plasma5Support`. В ответе используются два блока:
+The command is run through the `executable` engine of `Plasma5Support`. Two blocks of the response are used:
 
-| Поле ответа | Что показывает |
+| Response field | What it shows |
 |---|---|
-| `five_hour.utilization`, `five_hour.resets_at` | 5-часовое окно: процент и время сброса |
-| `seven_day.utilization`, `seven_day.resets_at` | недельный лимит: процент и время сброса |
+| `five_hour.utilization`, `five_hour.resets_at` | 5-hour window: percentage and reset time |
+| `seven_day.utilization`, `seven_day.resets_at` | weekly limit: percentage and reset time |
 
-Остальные поля ответа (лимиты по моделям Sonnet и Opus и прочие) виджет игнорирует.
+All other fields of the response (per-model Sonnet and Opus limits and so on) are ignored.
 
-Ответ считается успешным, если HTTP-код 200, тело разбирается как JSON и в нём есть блок `seven_day`. Если блока `five_hour` нет, он трактуется как неактивное окно и показывается 0%. Это допущение: реальный ответ без этого блока не наблюдался.
+A response counts as successful if the HTTP code is 200, the body parses as JSON, and it contains a `seven_day` block. If the `five_hour` block is missing, it is treated as an inactive window and 0% is shown. This is an assumption: a real response without this block has not been observed.
 
-### Что происходит при ошибках
+### What happens on errors
 
-При любой ошибке (нет сети, токен просрочен, код не 200, неожиданный формат) кольца становятся серыми и остаются на последних известных значениях. Следующая попытка — через 10 минут.
+On any error (no network, expired token, non-200 code, unexpected format) the rings turn gray and keep the last known values. The next attempt is in 10 minutes.
 
-Виджет **не обновляет** токен сам. Токен обновляет Claude Code, поэтому, если вы давно его не запускали, токен может протухнуть, и виджет будет серым до следующего запуска Claude Code. Обновление токена из виджета не реализовано намеренно: токен может оказаться одноразовым, и можно сломать вам вход в Claude Code.
+The widget does **not** refresh the token itself. Claude Code refreshes it, so if you have not run Claude Code for a long time the token may expire and the widget stays gray until the next Claude Code run. Refreshing the token from the widget is intentionally not implemented: the token may be single-use, and doing so could break your Claude Code sign-in.
 
-## Приватность и безопасность
+## Privacy and security
 
-- Токен читается из локального файла в момент запроса. Виджет его нигде не сохраняет и не логирует.
-- Токен передаётся в `curl` через stdin (`-H @-`), поэтому не виден в списке процессов.
-- Токен отправляется только на `api.anthropic.com`.
-- Никаких других внешних запросов виджет не делает.
-- В репозитории нет токенов, а `.gitignore` закрывает файлы с учётными данными, сырые ответы API, логи и скриншоты.
+- The token is read from a local file at request time. The widget does not store or log it anywhere.
+- The token is passed to `curl` through stdin (`-H @-`), so it is not visible in the process list.
+- The token is sent only to `api.anthropic.com`.
+- The widget makes no other external requests.
+- The repository contains no tokens, and `.gitignore` covers credential files, raw API responses, logs and screenshots.
 
-## Ограничения
+## Limitations
 
-- **Эндпоинт неофициальный.** Адрес `/api/oauth/usage` и заголовок `anthropic-beta: oauth-2025-04-20` нигде не документированы. Anthropic может изменить или закрыть их без предупреждения, после этого виджет перестанет получать данные. Его использует ряд сторонних инструментов, но гарантий нет.
-- **Частота запросов.** На более частые запросы API отвечает 429, поэтому интервал 10 минут. Интервал зашит в код (`interval: 600000` в `main.qml`).
-- **Только подписка.** Нужен вход в Claude Code по подписке, а не по API-ключу. Виджет проверялся только на Pro.
-- **Тексты на русском.** Всплывашка написана по-русски, локализации нет.
-- **Устаревание после сброса.** Между сбросом лимита и следующим опросом кольцо ещё показывает старое значение, а во всплывашке написано «сброс наступил».
+- **The endpoint is unofficial.** The `/api/oauth/usage` address and the `anthropic-beta: oauth-2025-04-20` header are not documented anywhere. Anthropic may change or remove them without notice, after which the widget will stop getting data. Several third-party tools use it, but there are no guarantees.
+- **Request rate.** The API answers more frequent requests with 429, hence the 10-minute interval. The interval is hardcoded (`interval: 600000` in `main.qml`).
+- **Subscription only.** It requires a Claude Code sign-in with a subscription, not an API key. The widget has only been tested with Pro.
+- **Russian UI text.** The tooltip is written in Russian; there is no localization.
+- **Stale after a reset.** Between a limit resetting and the next poll, the ring still shows the old value, and the tooltip says "сброс наступил" ("reset has occurred").
 
-## Что проверено, а что нет
+## What has and has not been verified
 
-Проверено:
+Verified:
 
-- запрос к эндпоинту с реальным токеном: HTTP 200, формат ответа соответствует описанию;
-- работа в горизонтальных панелях Plasma 30 и 46 px и в тестовом окне `plasmawindowed`;
-- смена цвета на 86% (оранжевый) и 97% (красный) и серое состояние при ошибке: на подставных данных в тестовом окне;
-- размеры колец и цифр на реальных панелях по снимкам.
+- a request to the endpoint with a real token: HTTP 200, the response format matches the description;
+- operation in horizontal Plasma panels of 30 and 46 px and in a test `plasmawindowed` window;
+- color change at 86% (orange) and 97% (red) and the gray error state: on fake data in a test window;
+- ring and digit sizes in real panels, checked from screenshots.
 
-Не проверено:
+Not verified:
 
-- **вертикальная панель**: код есть, но на экране раскладку никто не видел;
-- **всплывашка** при наведении: текст написан, но в панели не смотрелся;
-- **значение 100%**: трёхзначное число должно автоматически уменьшаться, но на практике не видели;
-- **смена цвета на реальных данных**: только на подставных;
-- ответ API без блока `five_hour`.
+- **vertical panel**: the code is there, but nobody has seen the layout on screen;
+- **tooltip** on hover: the text is written, but it has not been looked at in a panel;
+- **a value of 100%**: a three-digit number should shrink automatically, but it has not been seen in practice;
+- **color change on real data**: only on fake data;
+- an API response without the `five_hour` block.
 
-## Разработка
+## Development
 
-Структура:
+Structure:
 
 ```
 claude-usage/
-├── metadata.json          # описание пакета Plasma
-└── contents/ui/main.qml   # весь код виджета
+├── metadata.json          # Plasma package description
+└── contents/ui/main.qml   # all of the widget code
 ```
 
-Весь код — один QML-файл:
+All the code is a single QML file:
 
-- `PlasmoidItem` с `preferredRepresentation: fullRepresentation`: кольца показываются прямо в панели, без всплывающего окна;
-- `Plasma5Support.DataSource` с движком `executable`: выполняет команду раз в 10 минут и разбирает ответ;
-- компонент `Ring`: кольцо на `QtQuick.Shapes` с числом внутри;
-- `GridLayout`: раскладка по формфактору панели.
+- a `PlasmoidItem` with `preferredRepresentation: fullRepresentation`: the rings are shown right in the panel, without a popup;
+- a `Plasma5Support.DataSource` with the `executable` engine: runs the command every 10 minutes and parses the response;
+- a `Ring` component: a ring built on `QtQuick.Shapes` with a number inside;
+- a `GridLayout`: layout depending on the panel form factor.
 
-Без добавления в панель проверять виджет можно в отдельном окне:
+Without adding it to a panel, you can check the widget in a separate window:
 
 ```bash
 plasmawindowed local.claude-usage
 ```
 
-Так видно рабочий стол и ошибки QML в консоли, но не поведение в панели. Размер колец в панели зависит от того, какую толщину выделяет панель: он задаётся от размера корневого элемента виджета, а не от размера самой раскладки, иначе кольца застревают на минимальном размере.
+This shows the desktop layout and QML errors in the console, but not the behavior in a panel. Ring size in a panel depends on the thickness the panel allots: it is derived from the size of the widget's root item, not from the size of the layout itself, otherwise the rings get stuck at the minimum size.
 
-Чтобы проверить цвета и состояние ошибки без реального API, временно подставьте в свойство `command` в `main.qml` команду, которая печатает фальшивый JSON и строку `200` (или `echo oops` для имитации ошибки), и запустите `plasmawindowed`. Не забудьте вернуть исходную команду.
+To check colors and the error state without the real API, temporarily put into the `command` property in `main.qml` a command that prints fake JSON followed by a line `200` (or `echo oops` to simulate an error), and run `plasmawindowed`. Do not forget to restore the original command.
 
-## Чего в виджете нет намеренно
+## What the widget intentionally does not do
 
-Это осознанные решения, а не недоделки:
+These are deliberate decisions, not unfinished work:
 
-- настройки цветов и интервала опроса: пороги меняют цвет сами, а цвета берутся из темы;
-- лимиты по отдельным моделям (Sonnet, Opus);
-- уведомления о приближении к лимиту;
-- поддержка API-ключей;
-- обновление токена;
-- клик для принудительного обновления.
+- settings for colors and polling interval: thresholds change the color on their own, and colors come from the theme;
+- limits for individual models (Sonnet, Opus);
+- notifications when approaching a limit;
+- API key support;
+- token refresh;
+- click to force a refresh.
 
-## Лицензия
+## License
 
-MIT, см. файл [LICENSE](LICENSE).
+MIT, see [LICENSE](LICENSE).
