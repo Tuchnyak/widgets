@@ -1,5 +1,7 @@
 # Claude Usage — виджет KDE Plasma 6
 
+[English version](README.en.md)
+
 Два кольца в панели Plasma, которые показывают, сколько лимитов подписки Claude Pro вы уже израсходовали:
 
 - **левое кольцо** — 5-часовое окно;
